@@ -1,12 +1,11 @@
 version: '3.8'
 
 services:
-  api:
+  sast-api:
     build: .
-    container_name: sast_api
     ports:
       - "8000:8000"
     volumes:
-      - ./app:/app/app
-    environment:
-      - PYTHONUNBUFFERED=1
+      # Mapeia o diretório local para dentro do container, permitindo Hot Reload
+      - .:/app
+    command: uvicorn api.main:app --host 0.0.0.0 --port 8000 --reload
