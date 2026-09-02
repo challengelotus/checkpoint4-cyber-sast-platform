@@ -1,29 +1,23 @@
-# Python
-__pycache__/
-*.py[cod]
-*$py.class
-.pytest_cache/
-.coverage
-htmlcov/
-
 # Ambientes Virtuais
 venv/
 env/
-.env/
 .venv/
 
-# Variáveis de Ambiente / Secrets
-.env
-.env.local
+# Caches do Python
+__pycache__/
+*.pyc
+*.pyo
 
-# IDEs e Editores
+# Arquivos de IDE e SO
 .vscode/
 .idea/
-*.swp
-
-# Sistema Operacional
 .DS_Store
-Thumbs.db
 
-# Tree-sitter (artefatos gerados futuramente)
-build/
+# Variáveis de Ambiente e Segredos (CRÍTICO PARA SEGURANÇA)
+.env
+*.pem
+secrets/
+
+# Banco de dados local (se usarmos SQLite provisoriamente)
+*.sqlite3
+*.db
