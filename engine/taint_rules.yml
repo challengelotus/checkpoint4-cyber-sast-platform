@@ -1,0 +1,12 @@
+rules:
+  - id: python-taint-eval
+    mode: taint
+    pattern-sources:
+      - pattern: input(...)
+      - pattern: get_user_data(...)
+    pattern-sinks:
+      - pattern: eval(...)
+      - pattern: exec(...)
+    message: "Taint Analysis: Dado não confiável fluiu diretamente para uma função de execução de código."
+    languages: [python]
+    severity: ERROR
