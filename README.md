@@ -74,7 +74,8 @@ Siga os passos abaixo para subir a infraestrutura completa do SAST na sua máqui
 
 1.  **Clone o repositório**
     ```bash
-    git clone [https://github.com/challengelotus/checkpoint4-cyber-sast-platform.git](https://github.com/challengelotus/checkpoint4-cyber-sast-platform.git)
+    git clone https://github.com/challengelotus/checkpoint4-cyber-sast-platform.git
+    
     cd checkpoint4-cyber-sast-platform
     ```
 
