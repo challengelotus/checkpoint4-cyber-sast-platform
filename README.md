@@ -29,7 +29,7 @@ Em vez de depender de expressões regulares (Regex) falhas, nossa plataforma uti
 > *O diagrama abaixo ilustra a arquitetura técnica da plataforma, detalhando a comunicação entre a API Síncrona (FastAPI) e o Motor de Análise (AST) dentro do ambiente conteinerizado.*
 
 <div align="center">
-  <img src="docs/diagrama.png" alt="Diagrama de Arquitetura C4" width="800"/>
+  <img src="docs/diagrama.png" alt="Diagrama de Arquitetura C4" width=""/>
   <p><i>Arquitetura Nível 2 (Container)</i></p>
 </div>
 
