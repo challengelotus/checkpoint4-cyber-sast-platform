@@ -23,11 +23,17 @@ class AIAnalyzer:
 
         # Monta o contexto para o LLM
         prompt = (
-            "Você é um engenheiro de segurança DevSecOps avaliando código Python.\n"
-            f"O seguinte código possui as seguintes vulnerabilidades detectadas:\n{json.dumps(findings, indent=2)}\n\n"
-            f"Código Fonte:\n{source_code}\n\n"
-            "Sua tarefa: Para cada vulnerabilidade, classifique a severidade real, valide se é um falso positivo "
-            "e forneça uma sugestão de correção em um formato conciso."
+            "Você é um Especialista em AppSec e Engenheiro DevSecOps.\n"
+            f"Analise o seguinte código Python:\n{source_code}\n\n"
+            f"As seguintes vulnerabilidades foram detectadas pelas ferramentas SAST (AST e Semgrep):\n{json.dumps(findings, indent=2)}\n\n"
+            "Sua tarefa é gerar um relatório técnico com os seguintes pontos para CADA vulnerabilidade:\n"
+            "1. Severidade Real (classifique entre Baixo, Médio, Alto, Crítico).\n"
+            "2. Falso Positivo (indique 'SIM' ou 'NÃO' e justifique brevemente).\n"
+            "3. Sugestão de Correção (mostre como reescrever o código de forma segura).\n\n"
+            "REGRAS ABSOLUTAS:\n"
+            "- Você DEVE responder inteiramente em Português do Brasil (pt-BR).\n"
+            "- Seja direto, técnico e conciso.\n"
+            "- Não inclua saudações ou introduções genéricas."
         )
 
         payload = {
