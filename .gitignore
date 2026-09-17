@@ -18,6 +18,6 @@ __pycache__/
 *.pem
 secrets/
 
-# Banco de dados local (se usarmos SQLite provisoriamente)
-*.sqlite3
+# Banco de Dados Local
 *.db
+sast_results.db
