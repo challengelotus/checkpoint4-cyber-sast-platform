@@ -5,13 +5,14 @@
   <p>
     <img src="https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white" alt="Python"/>
     <img src="https://img.shields.io/badge/FastAPI-009688?style=for-the-badge&logo=fastapi&logoColor=white" alt="FastAPI"/>
+    <img src="https://img.shields.io/badge/Streamlit-FF4B4B?style=for-the-badge&logo=streamlit&logoColor=white" alt="Streamlit"/>
     <img src="https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white" alt="Docker"/>
     <img src="https://img.shields.io/badge/Ollama-black?style=for-the-badge&logo=ai&logoColor=white" alt="Ollama LLM"/>
     <img src="https://img.shields.io/badge/Semgrep-5C4EE5?style=for-the-badge&logo=semgrep&logoColor=white" alt="Semgrep"/>
-    <img src="https://img.shields.io/badge/license-MIT-green?style=for-the-badge" alt="License MIT"/>
+    <img src="https://img.shields.io/badge/SQLite-003B57?style=for-the-badge&logo=sqlite&logoColor=white" alt="SQLite"/>
   </p>
   <p>
-    <b>Status do Projeto:</b> ✅ Checkpoint 1 Concluído | ✅ Checkpoint 2 Concluído | 🚧 Checkpoint 3 em andamento
+    <b>Status do Projeto:</b> ✅ Plataforma V3.0 (100% Funcional) | Checkpoints 1, 2 e 3 Concluídos
   </p>
 </div>
 
@@ -21,42 +22,66 @@
 
 A **Plataforma SAST & DevSecOps** é um motor de análise estática de segurança focado em auditoria de código-fonte Python. O projeto tem como missão aplicar a cultura *Shift-Left*, trazendo a segurança para as fases iniciais do ciclo de desenvolvimento de software (SDLC).
 
-Em vez de depender de expressões regulares (Regex) falhas, nossa plataforma utiliza o módulo nativo `ast` do Python para construir uma **Árvore de Sintaxe Abstrata (AST)**, permitindo uma inspeção estrutural profunda. Essa fundação é ampliada por um motor de **Taint Analysis** e uma camada de **Inteligência Artificial (Llama 3)** para validação semântica e correção automatizada.
+Nossa arquitetura orientada a serviços combina análise estrutural rápida (AST), rastreamento avançado de fluxo de dados (Semgrep) e uma camada de **Inteligência Artificial (Llama 3)** operando localmente para validação semântica, redução de falsos positivos e geração automatizada de blocos de código corrigidos (Remediation Advice). Tudo isso centralizado em um Dashboard Executivo interativo e orquestrado por pipelines de CI/CD.
 
 ---
 
 ## 🏛️ Arquitetura do Sistema (C4 Model)
 
-> *O diagrama abaixo ilustra a arquitetura técnica da plataforma, detalhando a comunicação entre a API Síncrona (FastAPI) e os Motores de Análise dentro do ambiente conteinerizado.*
+> *O diagrama abaixo ilustra a arquitetura técnica conteinerizada da plataforma, detalhando a comunicação entre o frontend, a API síncrona, o banco de dados e os múltiplos motores de análise.*
 
-<div align="center">
-  <img src="docs/diagrama.png" alt="Diagrama de Arquitetura C4" width=""/>
-  <p><i>Arquitetura Nível 2 (Container)</i></p>
-</div>
+```mermaid
+C4Context
+  title Arquitetura Nível 2 (Container) - Plataforma SAST V3.0
+
+  Person(user, "Desenvolvedor / AppSec", "Faz upload de código para auditoria ou aprova Pull Requests.")
+  System_Ext(github, "GitHub Actions", "Pipeline CI/CD contendo o Security Gate (CLI).")
+
+  System_Boundary(sast_system, "Plataforma SAST & DevSecOps (Docker)") {
+    Container(dashboard, "Dashboard Executivo", "Streamlit, Plotly, FPDF", "Interface visual com abas, gráficos de métricas e exportação PDF.")
+    Container(api, "API Síncrona", "FastAPI, Python", "Exposição de rotas (V2), orquestração de análise e persistência.")
+    ContainerDb(db, "Banco de Dados Local", "SQLite, SQLAlchemy", "Persistência do histórico de scans, métricas e relatórios semânticos.")
+    
+    System_Boundary(engines, "Motores de Análise Rápida") {
+        Container(ast, "Motor AST", "Módulo 'ast'", "Parsing estrutural para senhas hardcoded e funções perigosas.")
+        Container(semgrep, "Semgrep Runner", "CLI", "Taint Analysis e rastreamento de fluxo de dados.")
+    }
+    
+    Container(ollama, "Motor Semântico (IA)", "Ollama, Llama 3", "Classificação de severidade real e geração de Remediation Advice.")
+  }
+
+  Rel(user, dashboard, "Solicita auditorias e visualiza relatórios", "HTTP/8501")
+  Rel(github, api, "Dispara análise estática em PRs (Mock/CLI)", "Script Local")
+  Rel(dashboard, api, "Envia arquivos físicos e consome histórico", "HTTP/8000 (REST)")
+  
+  Rel(api, db, "Persiste e lê resultados de auditoria", "ORM")
+  Rel(api, ast, "Extrai nós estruturais", "Memória")
+  Rel(api, semgrep, "Identifica vazamento de fluxo (Taint)", "Subprocess")
+  Rel(api, ollama, "Delega análise de contexto e falso positivo", "HTTP/11434")
+```
 
 ---
 
 ## ✨ Principais Funcionalidades
 
-- ✅ **Parsing Estrutural (AST):** Conversão de código-fonte em nós de sintaxe abstrata para detecção de senhas hardcoded e funções perigosas (`eval`, `exec`).
-- ✅ **Taint Analysis (Semgrep):** Rastreamento de fluxo de dados para identificar se entradas não sanitizadas alcançam funções sensíveis (sinks).
-- ✅ **Análise Semântica (IA Local):** Uso do modelo Llama 3 (via Ollama) para classificar a severidade real das falhas, reduzir falsos positivos em lógicas complexas e gerar sugestões automatizadas de correção (Remediation Advice).
-- ✅ **Ambiente Conteinerizado:** Setup plug-and-play de toda a stack utilizando Docker e Docker Compose.
-- 🚧 *Em breve (Checkpoint 3): Implementação de Security Gates em pipelines CI/CD (GitHub Actions) para bloqueio de Pull Requests inseguros.*
-- 🚧 *Em breve (Checkpoint 3): Desenvolvimento de Dashboard Executivo para visualização de métricas por arquivo, linha e severidade.*
+* ✅ **Parsing Estrutural (AST):** Conversão de código-fonte em nós de sintaxe abstrata para detecção instantânea de segredos e injeções de código (`eval`, `exec`).
+* ✅ **Taint Analysis (Semgrep):** Rastreamento de fluxo de dados para identificar se entradas não sanitizadas alcançam funções sensíveis.
+* ✅ **Análise Semântica (IA Local):** Uso de LLM isolado para classificar a severidade real, justificar falsos positivos e gerar sugestões de correção diretamente em código.
+* ✅ **Persistência de Dados (SQLite):** Histórico completo das auditorias armazenado via SQLAlchemy, com segurança garantida pelo isolamento no `.gitignore`.
+* ✅ **Dashboard Executivo (Streamlit):** Visualização rica dividida em abas contendo análise interativa, exportação de laudos em PDF baseados em HTML, e gráficos de Severidade, Categorias e Tendência de Falhas.
+* ✅ **Security Gates (CI/CD):** Integração com GitHub Actions executando varreduras híbridas que bloqueiam *Pull Requests* com vulnerabilidades críticas.
 
 ---
 
 ## 🛠️ Tecnologias Utilizadas
 
-| Ferramenta | Finalidade |
-| :--- | :--- |
-| **Python 3.11** | Linguagem base da aplicação e alvo principal do SAST. |
-| **FastAPI** | Framework moderno para construção e exposição da API. |
-| **Módulo nativo `ast`** | Geração e navegação pelos nós da Árvore de Sintaxe Abstrata. |
-| **Semgrep** | Motor secundário utilizado exclusivamente para validação de Taint Analysis. |
-| **Docker & Compose** | Orquestração, conteinerização e padronização do ambiente local. |
-| **Ollama (Llama 3)** | Integração de LLM local para análise semântica sem vazamento de dados corporativos. |
+| Componente | Tecnologia Recomendada |
+| --- | --- |
+| **Backend & API** | Python 3.11, FastAPI, SQLAlchemy, SQLite |
+| **Interface Visual** | Streamlit, Plotly (Gráficos), FPDF2 (Relatórios) |
+| **Motores de Análise** | Módulo nativo `ast`, Semgrep |
+| **Inteligência Artificial** | Ollama rodando localmente com modelo Llama 3 |
+| **DevSecOps** | Docker, Docker Compose, GitHub Actions (CI/CD) |
 
 ---
 
@@ -66,47 +91,40 @@ Siga os passos abaixo para subir a infraestrutura completa do SAST na sua máqui
 
 ### 📋 Pré-requisitos
 
-- [Docker](https://docs.docker.com/get-docker/) instalado e rodando.
-- [Docker Compose](https://docs.docker.com/compose/install/) configurado.
-- [Git](https://git-scm.com/)
+* Docker e Docker Compose instalados.
+* Git.
 
 ### 🔧 Instalação e Execução
 
-1.  **Clone o repositório**
-    ```bash
-    git clone https://github.com/challengelotus/checkpoint4-cyber-sast-platform.git
+1. **Clone o repositório**
+```bash
+git clone https://github.com/challengelotus/checkpoint4-cyber-sast-platform.git
+cd checkpoint4-cyber-sast-platform
+```
 
-    cd checkpoint4-cyber-sast-platform
-    ```
+2. **Suba os containers com o Docker Compose**
+```bash
+docker compose up --build -d
+```
 
-2.  **Suba os containers com o Docker Compose**
-    ```bash
-    docker-compose up --build -d
-    ```
-
-3.  **Baixe o Modelo de IA (Primeira Execução)**
-    Acesse o shell do container do Ollama e baixe o Llama 3:
-    ```bash
-    docker exec -it <nome_do_container_ollama> ollama run llama3
-    ```
-    *(Digite `/bye` para sair após a conclusão do download).*
-
-4.  **Valide o funcionamento**
-    - Acesse `http://localhost:8000/docs` para visualizar o **Swagger UI**.
+3. **Baixe o Modelo de IA (Apenas na Primeira Execução)**
+Acesse o shell do container do Ollama e faça o download do Llama 3:
+```bash
+docker exec -it <nome_do_container_ollama> ollama run llama3
+```
+*(Digite `/bye` para sair após a conclusão).*
 
 ---
 
-## 💡 Como Usar (Guia Básico)
+## 💡 Como Usar (Guia da Versão 3.0)
 
-1. Com a aplicação rodando, abra a documentação Swagger no navegador: `http://localhost:8000/docs`.
-2. Expanda o endpoint **`POST /api/v1/analyze`** e clique em **"Try it out"**.
-3. No corpo da requisição, envie o código Python que deseja auditar. Exemplo com Taint Analysis:
-    ```json
-      {
-        "source_code": "senha_banco = 'admin123'\n\ndef processar_dados():\n        comando_usuario = input('Digite o comando: ')\n    dado_sanitizado = comando_usuario.strip()\n    eval(dado_sanitizado)"
-      }
-    ```
-4. Clique em **Execute**. A API retornará o JSON consolidando as falhas estruturais, o rastreamento de fluxo e o relatório completo do LLM contendo a severidade real e a recomendação de correção.
+Em vez de usar APIs via texto, a V3.0 possui uma interface gráfica completa focada na experiência do usuário e relatórios visuais:
+
+1. Acesse o **Dashboard Executivo** pelo navegador: `http://localhost:8501`.
+2. Na aba **🔍 Auditoria de Código**, clique em "Browse files" e envie um arquivo Python (`.py`) vulnerável (ex: os arquivos localizados na pasta `tests/` do projeto).
+3. Clique em **Executar Motor SAST**.
+4. Aguarde a orquestração (AST + Semgrep + Llama 3). O relatório será renderizado na tela contendo os *Cards* de vulnerabilidade e o parecer do Engenheiro de IA. Você pode exportar o laudo clicando em **Baixar Relatório em PDF**.
+5. Acesse a aba **📈 Dashboard Executivo** para visualizar as métricas globais do projeto (Gráfico de Rosca, Falhas Detectadas e Linha de Tendência).
 
 ---
 
@@ -115,7 +133,7 @@ Siga os passos abaixo para subir a infraestrutura completa do SAST na sua máqui
 Projeto desenvolvido para a disciplina de Cybersecurity na Engenharia de Software.
 
 | Integrante | RM | Responsabilidade Principal |
-| :--- | :--- | :--- |
+| --- | --- | --- |
 | **João Victor Soave** | RM557595 | Arquiteto de Software e Desenvolvedor Backend |
 | **Maria Alice Freitas Araújo** | RM557516 | QA e Especialista em Testes/Segurança |
 | **Pedro Henrique Mendes dos Santos** | RM555332 | Desenvolvedor Backend / LLM Integration |
@@ -124,10 +142,6 @@ Projeto desenvolvido para a disciplina de Cybersecurity na Engenharia de Softwar
 
 ---
 
-## 📄 Licença
+## 📄 Licença e Ética
 
 Projeto acadêmico. Este repositório está licenciado sob a **MIT License**.
-
-<div align="center">
-  <sub>Desenvolvido de forma ética para fins de educação e segurança defensiva. A análise de código deve respeitar a propriedade intelectual e a privacidade do código-fonte. Utilize apenas repositórios autorizados.</sub>
-</div>
