@@ -30,35 +30,7 @@ Nossa arquitetura orientada a serviços combina análise estrutural rápida (AST
 
 > *O diagrama abaixo ilustra a arquitetura técnica conteinerizada da plataforma, detalhando a comunicação entre o frontend, a API síncrona, o banco de dados e os múltiplos motores de análise.*
 
-```mermaid
-C4Context
-  title Arquitetura Nível 2 (Container) - Plataforma SAST V3.0
-
-  Person(user, "Desenvolvedor / AppSec", "Faz upload de código para auditoria ou aprova Pull Requests.")
-  System_Ext(github, "GitHub Actions", "Pipeline CI/CD contendo o Security Gate (CLI).")
-
-  System_Boundary(sast_system, "Plataforma SAST & DevSecOps (Docker)") {
-    Container(dashboard, "Dashboard Executivo", "Streamlit, Plotly, FPDF", "Interface visual com abas, gráficos de métricas e exportação PDF.")
-    Container(api, "API Síncrona", "FastAPI, Python", "Exposição de rotas (V2), orquestração de análise e persistência.")
-    ContainerDb(db, "Banco de Dados Local", "SQLite, SQLAlchemy", "Persistência do histórico de scans, métricas e relatórios semânticos.")
-    
-    System_Boundary(engines, "Motores de Análise Rápida") {
-        Container(ast, "Motor AST", "Módulo 'ast'", "Parsing estrutural para senhas hardcoded e funções perigosas.")
-        Container(semgrep, "Semgrep Runner", "CLI", "Taint Analysis e rastreamento de fluxo de dados.")
-    }
-    
-    Container(ollama, "Motor Semântico (IA)", "Ollama, Llama 3", "Classificação de severidade real e geração de Remediation Advice.")
-  }
-
-  Rel(user, dashboard, "Solicita auditorias e visualiza relatórios", "HTTP/8501")
-  Rel(github, api, "Dispara análise estática em PRs (Mock/CLI)", "Script Local")
-  Rel(dashboard, api, "Envia arquivos físicos e consome histórico", "HTTP/8000 (REST)")
-  
-  Rel(api, db, "Persiste e lê resultados de auditoria", "ORM")
-  Rel(api, ast, "Extrai nós estruturais", "Memória")
-  Rel(api, semgrep, "Identifica vazamento de fluxo (Taint)", "Subprocess")
-  Rel(api, ollama, "Delega análise de contexto e falso positivo", "HTTP/11434")
-```
+<img src="docs/diagrama_v2.png" alt="Diagrama de Arquitetura"/>
 
 ---
 
