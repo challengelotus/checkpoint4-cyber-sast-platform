@@ -1,8 +1,12 @@
-from fastapi import Depends, FastAPI, File, UploadFile
+import time
+import uuid
+
+from fastapi import Depends, FastAPI, File, Request, UploadFile
 from sqlalchemy.orm import Session
 
 from ai_module.analyzer import AIAnalyzer
 from api.database import Base, ScanResult, SessionLocal, engine
+from api.logger import log
 from engine.parser import SASTEngine
 from engine.semgrep_runner import SemgrepRunner
 
@@ -13,6 +17,41 @@ app = FastAPI(
     title="Plataforma SAST V2",
     description="Análise Estática com Persistência",
 )
+
+
+# --- MIDDLEWARE DE LOGS ESTRUTURADOS ---
+@app.middleware("http")
+async def log_requests(request: Request, call_next):
+    # Gera um ID único para rastrear esta requisição específica
+    request_id = str(uuid.uuid4())
+    start_time = time.time()
+
+    # Injeta contexto no log (ficará no nó 'extra' do JSON)
+    context_log = log.bind(
+        request_id=request_id,
+        method=request.method,
+        endpoint=request.url.path,
+        client_ip=request.client.host,
+    )
+
+    context_log.info("Iniciando processamento da requisição")
+
+    try:
+        response = await call_next(request)
+        process_time = time.time() - start_time
+
+        context_log.bind(
+            status_code=response.status_code,
+            process_time_ms=round(process_time * 1000, 2),
+        ).info("Requisição finalizada com sucesso")
+
+        return response
+    except Exception as e:
+        process_time = time.time() - start_time
+        context_log.bind(
+            process_time_ms=round(process_time * 1000, 2),
+        ).opt(exception=True).error(f"Falha interna no servidor: {str(e)}")
+        raise
 
 
 # Injeção de dependência para pegar a sessão do banco
