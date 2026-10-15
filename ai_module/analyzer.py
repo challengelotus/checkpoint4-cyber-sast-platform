@@ -3,6 +3,8 @@ from typing import Any, Dict, List
 
 import requests
 
+from api.core.logger import log
+
 
 class AIAnalyzer:
     def __init__(
@@ -43,19 +45,36 @@ class AIAnalyzer:
         }
 
         try:
-            response = requests.post(self.ollama_url, json=payload)
+            log.bind(model=self.model).info(
+                "Iniciando requisição ao motor de IA local...",
+            )
+
+            # Adicionado timeout de 120 segundos para evitar travamento síncrono da API
+            response = requests.post(self.ollama_url, json=payload, timeout=120)
             response.raise_for_status()
+
             ai_result = response.json().get("response", "")
 
-            # Anexamos a análise da IA como um relatório geral no final dos achados
+            log.info("Relatório de IA gerado com sucesso.")
+
+            # Anexamos a análise da IA utilizando a chave que o frontend espera
             findings.append(
                 {
-                    "ai_analysis": "Relatório Semântico Llama 3",
+                    "ai_analysis": f"Relatório Semântico ({self.model.capitalize()})",
                     "details": ai_result,
                 },
             )
 
         except Exception as e:
-            findings.append({"ai_error": f"Erro ao comunicar com Ollama: {str(e)}"})
+            erro_msg = f"Falha na comunicação com o LLM local. Verifique se o container do Ollama está rodando e se o modelo '{self.model}' foi baixado.\nDetalhe técnico: {str(e)}"
+            log.error(erro_msg)
+
+            # Correção Crítica: utilizar a chave "ai_analysis" para forçar o Streamlit a exibir o erro
+            findings.append(
+                {
+                    "ai_analysis": "Erro no Motor de IA",
+                    "details": erro_msg,
+                },
+            )
 
         return findings
