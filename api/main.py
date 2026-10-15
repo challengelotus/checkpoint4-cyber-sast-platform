@@ -5,8 +5,9 @@ from fastapi import Depends, FastAPI, File, Request, UploadFile
 from sqlalchemy.orm import Session
 
 from ai_module.analyzer import AIAnalyzer
+from api.core.config import settings
+from api.core.logger import log
 from api.database import Base, ScanResult, SessionLocal, engine
-from api.logger import log
 from engine.parser import SASTEngine
 from engine.semgrep_runner import SemgrepRunner
 
@@ -14,19 +15,18 @@ from engine.semgrep_runner import SemgrepRunner
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI(
-    title="Plataforma SAST V2",
-    description="Análise Estática com Persistência",
+    title=settings.project_name,
+    version=settings.api_version,
+    description="Análise Estática com Persistência e Segurança DevSecOps",
 )
 
 
 # --- MIDDLEWARE DE LOGS ESTRUTURADOS ---
 @app.middleware("http")
 async def log_requests(request: Request, call_next):
-    # Gera um ID único para rastrear esta requisição específica
     request_id = str(uuid.uuid4())
     start_time = time.time()
 
-    # Injeta contexto no log (ficará no nó 'extra' do JSON)
     context_log = log.bind(
         request_id=request_id,
         method=request.method,
@@ -65,7 +65,6 @@ def get_db():
 
 @app.post("/api/v2/analyze-file")
 async def analyze_file(file: UploadFile = File(...), db: Session = Depends(get_db)):
-    # Lê o conteúdo do arquivo enviado
     content = await file.read()
     source_code = content.decode("utf-8")
 
