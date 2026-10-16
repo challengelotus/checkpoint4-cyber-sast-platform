@@ -1,5 +1,6 @@
 import time
 import uuid
+from contextlib import asynccontextmanager
 
 from fastapi import Depends, FastAPI, File, HTTPException, Request, UploadFile, status
 from fastapi.security import OAuth2PasswordRequestForm
@@ -20,13 +21,45 @@ from api.database import Base, ScanResult, SessionLocal, User, engine
 from engine.parser import SASTEngine
 from engine.semgrep_runner import SemgrepRunner
 
-# Cria as tabelas no banco de dados assim que a API iniciar
-Base.metadata.create_all(bind=engine)
+
+# --- DATABASE SEEDING & STARTUP ---
+def init_db_seed():
+    """Garante a existência do usuário administrador padrão sem hardcoding."""
+    db = SessionLocal()
+    try:
+        admin = db.query(User).filter(User.username == settings.admin_username).first()
+        if not admin:
+            log.info(f"Criando usuário administrador padrão: {settings.admin_username}")
+            hashed_pw = get_password_hash(settings.admin_password)
+            new_admin = User(
+                username=settings.admin_username,
+                email=settings.admin_email,
+                hashed_password=hashed_pw,
+            )
+            db.add(new_admin)
+            db.commit()
+        else:
+            log.info("Verificação de startup: Administrador já existe no banco.")
+    except Exception as e:
+        log.error(f"Erro ao injetar administrador no banco de dados: {e}")
+    finally:
+        db.close()
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Executa ao iniciar o servidor
+    Base.metadata.create_all(bind=engine)
+    init_db_seed()
+    yield
+    # Executa ao desligar o servidor (limpeza de recursos, se necessário)
+
 
 app = FastAPI(
     title=settings.project_name,
     version=settings.api_version,
     description="Análise Estática com Persistência e Segurança DevSecOps",
+    lifespan=lifespan,
 )
 
 
@@ -43,7 +76,7 @@ class UserResponse(BaseModel):
     email: str
 
     class Config:
-        from_attributes = True  # Compatibilidade ORM (FastAPI v2+)
+        from_attributes = True
 
 
 class Token(BaseModel):
@@ -91,7 +124,6 @@ async def log_requests(request: Request, call_next):
     status_code=status.HTTP_201_CREATED,
 )
 def register_user(user: UserCreate, db: Session = Depends(get_db)):
-    # Validação para prevenir duplicação
     if (
         db.query(User)
         .filter((User.username == user.username) | (User.email == user.email))
@@ -113,7 +145,6 @@ def register_user(user: UserCreate, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(new_user)
 
-    # Registar evento de segurança estruturado
     log.bind(username=new_user.username).info("Novo utilizador registado com sucesso.")
     return new_user
 
@@ -125,7 +156,6 @@ def login_for_access_token(
 ):
     user = db.query(User).filter(User.username == form_data.username).first()
 
-    # Mitigação de enumeração de utilizadores através de mensagem de erro genérica
     if not user or not verify_password(form_data.password, user.hashed_password):
         log.bind(attempted_username=form_data.username).warning(
             "Tentativa de login falhada.",
@@ -137,33 +167,31 @@ def login_for_access_token(
         )
 
     access_token = create_access_token(data={"sub": user.username})
-    log.bind(username=user.username).info("Login efetuado com sucesso (JWT emitido).")
+    log.bind(username=user.username).info("Login efetuado com sucesso.")
 
     return {"access_token": access_token, "token_type": "bearer"}
 
 
-# --- ROTAS DA PLATAFORMA SAST (AGORA PROTEGIDAS) ---
+# --- ROTAS DA PLATAFORMA SAST ---
 @app.post("/api/v2/analyze-file")
 async def analyze_file(
     file: UploadFile = File(...),
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),  # BLINDAGEM JWT
+    current_user: User = Depends(get_current_user),
 ):
     content = await file.read()
     source_code = content.decode("utf-8")
 
-    # Motores de análise (AST + Semgrep + IA)
     ast_findings = SASTEngine().analyze(source_code)
     taint_findings = SemgrepRunner().analyze(source_code)
     all_findings = ast_findings + taint_findings
     final_findings = AIAnalyzer().get_remediation(source_code, all_findings)
 
-    # Persistência atrelada ao utilizador logado
     db_scan = ScanResult(
         filename=file.filename,
         total_findings=len(all_findings),
         findings_detail=final_findings,
-        user_id=current_user.id,  # Multi-tenancy garantido
+        user_id=current_user.id,
     )
     db.add(db_scan)
     db.commit()
@@ -185,9 +213,8 @@ async def analyze_file(
 @app.get("/api/v2/history")
 async def get_history(
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),  # BLINDAGEM JWT
+    current_user: User = Depends(get_current_user),
 ):
-    # O utilizador apenas visualiza o histórico que lhe pertence
     scans = (
         db.query(ScanResult)
         .filter(ScanResult.user_id == current_user.id)
