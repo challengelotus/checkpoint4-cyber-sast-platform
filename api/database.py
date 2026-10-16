@@ -1,14 +1,25 @@
 import datetime
-from sqlalchemy import JSON, Column, DateTime, Integer, String, ForeignKey, create_engine
-from sqlalchemy.orm import declarative_base, sessionmaker, relationship
+
+from sqlalchemy import (
+    JSON,
+    Column,
+    DateTime,
+    ForeignKey,
+    Integer,
+    String,
+    create_engine,
+)
+from sqlalchemy.orm import declarative_base, relationship, sessionmaker
 
 SQLALCHEMY_DATABASE_URL = "sqlite:///./sast_results.db"
 
 engine = create_engine(
-    SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False},
+    SQLALCHEMY_DATABASE_URL,
+    connect_args={"check_same_thread": False},
 )
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
+
 
 # --- TABELA DE USUÁRIOS ---
 class User(Base):
@@ -18,9 +29,12 @@ class User(Base):
     username = Column(String, unique=True, index=True)
     email = Column(String, unique=True, index=True)
     hashed_password = Column(String)
+    plan = Column(
+        String,
+        default="free",
+    )
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
 
-    # Relacionamento: Um usuário possui várias varreduras
     scans = relationship("ScanResult", back_populates="owner")
 
 
@@ -34,8 +48,5 @@ class ScanResult(Base):
     total_findings = Column(Integer)
     findings_detail = Column(JSON)
 
-    # FK: Vincula este resultado a um usuário específico
     user_id = Column(Integer, ForeignKey("users.id"))
-
-    # Relacionamento: Esta varredura pertence a um usuário
     owner = relationship("User", back_populates="scans")

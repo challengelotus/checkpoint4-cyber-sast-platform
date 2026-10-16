@@ -24,17 +24,19 @@ from engine.semgrep_runner import SemgrepRunner
 
 # --- DATABASE SEEDING & STARTUP ---
 def init_db_seed():
-    """Garante a existência do usuário administrador padrão sem hardcoding."""
     db = SessionLocal()
     try:
         admin = db.query(User).filter(User.username == settings.admin_username).first()
         if not admin:
-            log.info(f"Criando usuário administrador padrão: {settings.admin_username}")
+            log.info(
+                f"Criando usuário administrador padrão com plano PREMIUM: {settings.admin_username}",
+            )
             hashed_pw = get_password_hash(settings.admin_password)
             new_admin = User(
                 username=settings.admin_username,
                 email=settings.admin_email,
                 hashed_password=hashed_pw,
+                plan="premium",  # Admin recebe acesso total
             )
             db.add(new_admin)
             db.commit()
@@ -48,11 +50,9 @@ def init_db_seed():
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Executa ao iniciar o servidor
     Base.metadata.create_all(bind=engine)
     init_db_seed()
     yield
-    # Executa ao desligar o servidor (limpeza de recursos, se necessário)
 
 
 app = FastAPI(
@@ -74,6 +74,7 @@ class UserResponse(BaseModel):
     id: int
     username: str
     email: str
+    plan: str  # Retorna o plano contratado
 
     class Config:
         from_attributes = True
@@ -135,6 +136,7 @@ def register_user(user: UserCreate, db: Session = Depends(get_db)):
         )
 
     hashed_pwd = get_password_hash(user.password)
+    # Novo usuário herda o default "free" definido no banco de dados
     new_user = User(
         username=user.username,
         email=user.email,
@@ -145,7 +147,9 @@ def register_user(user: UserCreate, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(new_user)
 
-    log.bind(username=new_user.username).info("Novo utilizador registado com sucesso.")
+    log.bind(username=new_user.username, plan=new_user.plan).info(
+        "Novo utilizador registado com sucesso.",
+    )
     return new_user
 
 
@@ -167,7 +171,7 @@ def login_for_access_token(
         )
 
     access_token = create_access_token(data={"sub": user.username})
-    log.bind(username=user.username).info("Login efetuado com sucesso.")
+    log.bind(username=user.username, plan=user.plan).info("Login efetuado com sucesso.")
 
     return {"access_token": access_token, "token_type": "bearer"}
 
@@ -182,10 +186,22 @@ async def analyze_file(
     content = await file.read()
     source_code = content.decode("utf-8")
 
+    # Motores base (sempre executam)
     ast_findings = SASTEngine().analyze(source_code)
     taint_findings = SemgrepRunner().analyze(source_code)
     all_findings = ast_findings + taint_findings
-    final_findings = AIAnalyzer().get_remediation(source_code, all_findings)
+
+    # Validação do plano para acionar o motor Semântico de IA
+    if current_user.plan == "premium":
+        log.bind(username=current_user.username).info(
+            "Acesso Premium: Motor de IA acionado.",
+        )
+        final_findings = AIAnalyzer().get_remediation(source_code, all_findings)
+    else:
+        log.bind(username=current_user.username).info(
+            "Acesso Free: Motor de IA ignorado.",
+        )
+        final_findings = all_findings
 
     db_scan = ScanResult(
         filename=file.filename,
