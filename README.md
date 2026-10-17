@@ -1,7 +1,7 @@
 <div align="center">
   <img src="https://img.icons8.com/color/512/cyber-security.png" alt="Logo SAST" width="150"/>
-  <h1>🛡️ Motor SAST & DevSecOps</h1>
-  <p><em>Análise Estática de Segurança e Rastreamento de Vulnerabilidades</em></p>
+  <h1>🛡️ Motor SAST & DevSecOps (SaaS Edition)</h1>
+  <p><em>Análise Estática de Segurança, Rastreamento de Vulnerabilidades e Autenticação</em></p>
   <p>
     <img src="https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white" alt="Python"/>
     <img src="https://img.shields.io/badge/FastAPI-009688?style=for-the-badge&logo=fastapi&logoColor=white" alt="FastAPI"/>
@@ -12,23 +12,42 @@
     <img src="https://img.shields.io/badge/SQLite-003B57?style=for-the-badge&logo=sqlite&logoColor=white" alt="SQLite"/>
   </p>
   <p>
-    <b>Status do Projeto:</b> ✅ Plataforma V3.0 (100% Funcional) | Checkpoints 1, 2 e 3 Concluídos
+    <b>Status do Projeto:</b> ✅ Plataforma V4.0 (100% Funcional) | Entrega Final Concluída
   </p>
 </div>
 
 ---
 
+## 📑 Sumário
+
+- [Descrição do Projeto](#-descrição-do-projeto)
+- [Arquitetura do Sistema](#️-arquitetura-do-sistema-c4-model)
+- [Principais Funcionalidades](#-principais-funcionalidades)
+- [Tecnologias Utilizadas](#️-tecnologias-utilizadas)
+- [Como Instalar e Rodar](#-como-instalar-e-rodar-o-projeto)
+- [Como Usar](#-como-usar-guia-da-versão-40-saas)
+- [Equipe de Desenvolvimento](#-equipe-de-desenvolvimento)
+- [Licença e Ética](#-licença-e-ética)
+
+---
+
 ## 📝 Descrição do Projeto
 
-A **Plataforma SAST & DevSecOps** é um motor de análise estática de segurança focado em auditoria de código-fonte Python. O projeto tem como missão aplicar a cultura *Shift-Left*, trazendo a segurança para as fases iniciais do ciclo de desenvolvimento de software (SDLC).
+A **Plataforma SAST & DevSecOps** é um motor de análise estática de segurança corporativo focado na auditoria de código-fonte Python. A missão do projeto é aplicar a cultura *Shift-Left*, trazendo a segurança para as fases iniciais do ciclo de desenvolvimento de software (SDLC).
 
-Nossa arquitetura orientada a serviços combina análise estrutural rápida (AST), rastreamento avançado de fluxo de dados (Semgrep) e uma camada de **Inteligência Artificial (Llama 3)** operando localmente para validação semântica, redução de falsos positivos e geração automatizada de blocos de código corrigidos (Remediation Advice). Tudo isso centralizado em um Dashboard Executivo interativo e orquestrado por pipelines de CI/CD.
+A arquitetura moderna (Multi-Page Application) combina:
+
+- ⚡ **Análise estrutural rápida** (AST)
+- 🔍 **Rastreamento avançado de fluxo de dados** (Semgrep)
+- 🤖 **Inteligência Artificial** (Llama 3) rodando localmente para validação semântica
+
+A plataforma opera em modelo SaaS, com controle de acesso baseado em planos (RBAC), logs estruturados e integração completa com pipelines de CI/CD.
 
 ---
 
 ## 🏛️ Arquitetura do Sistema (C4 Model)
 
-> *O diagrama abaixo ilustra a arquitetura técnica conteinerizada da plataforma, detalhando a comunicação entre o frontend, a API síncrona, o banco de dados e os múltiplos motores de análise.*
+> O diagrama abaixo ilustra a arquitetura técnica conteinerizada da plataforma, detalhando a comunicação entre o frontend, a API síncrona protegida via JWT, o banco de dados e os múltiplos motores de análise.
 
 <img src="docs/diagrama_v2.png" alt="Diagrama de Arquitetura"/>
 
@@ -36,24 +55,28 @@ Nossa arquitetura orientada a serviços combina análise estrutural rápida (AST
 
 ## ✨ Principais Funcionalidades
 
-* ✅ **Parsing Estrutural (AST):** Conversão de código-fonte em nós de sintaxe abstrata para detecção instantânea de segredos e injeções de código (`eval`, `exec`).
-* ✅ **Taint Analysis (Semgrep):** Rastreamento de fluxo de dados para identificar se entradas não sanitizadas alcançam funções sensíveis.
-* ✅ **Análise Semântica (IA Local):** Uso de LLM isolado para classificar a severidade real, justificar falsos positivos e gerar sugestões de correção diretamente em código.
-* ✅ **Persistência de Dados (SQLite):** Histórico completo das auditorias armazenado via SQLAlchemy, com segurança garantida pelo isolamento no `.gitignore`.
-* ✅ **Dashboard Executivo (Streamlit):** Visualização rica dividida em abas contendo análise interativa, exportação de laudos em PDF baseados em HTML, e gráficos de Severidade, Categorias e Tendência de Falhas.
-* ✅ **Security Gates (CI/CD):** Integração com GitHub Actions executando varreduras híbridas que bloqueiam *Pull Requests* com vulnerabilidades críticas.
+| | Funcionalidade | Descrição |
+| --- | --- | --- |
+| 🔐 | **Autenticação e Segurança da API** | Sessão via tokens JWT, hash seguro (Bcrypt) e isolamento multi-tenant: cada usuário acessa apenas seus próprios dados. |
+| 💳 | **Controle de Planos (SaaS)** | Recursos diferenciados entre os planos *Free* e *Premium*. |
+| 🌳 | **Parsing Estrutural (AST)** | Converte o código em nós de sintaxe abstrata para detectar segredos (CWE-798) e injeções de código (CWE-94). |
+| 🧬 | **Taint Analysis (Semgrep)** | Rastreia o fluxo de dados para identificar falhas complexas. |
+| 🧠 | **Análise Semântica (IA Local Premium)** | LLM isolado classifica a severidade real, justifica falsos positivos e gera laudos executivos em PDF. |
+| 📡 | **Observabilidade DevSecOps** | Logs estruturados em JSON (Loguru) e credenciais via `.env` (database seeding idempotente). |
+| 📊 | **Dashboard Executivo (MPA)** | Telas de landing page, login, auditoria de código, métricas globais e inspeção detalhada do histórico por arquivo. |
+| 🚧 | **Security Gates (CI/CD)** | GitHub Actions bloqueia *Pull Requests* inseguros, com cache otimizado e relatórios de auditoria via artefatos. |
 
 ---
 
 ## 🛠️ Tecnologias Utilizadas
 
-| Componente | Tecnologia Recomendada |
+| Componente | Tecnologias |
 | --- | --- |
-| **Backend & API** | Python 3.11, FastAPI, SQLAlchemy, SQLite |
-| **Interface Visual** | Streamlit, Plotly (Gráficos), FPDF2 (Relatórios) |
+| **Backend & API** | Python 3.11, FastAPI, SQLAlchemy, SQLite, Pydantic, Passlib/Bcrypt |
+| **Interface Visual** | Streamlit (Multi-Page), Plotly (gráficos), FPDF2 (relatórios) |
 | **Motores de Análise** | Módulo nativo `ast`, Semgrep |
 | **Inteligência Artificial** | Ollama rodando localmente com modelo Llama 3 |
-| **DevSecOps** | Docker, Docker Compose, GitHub Actions (CI/CD) |
+| **DevSecOps** | Docker, Docker Compose, GitHub Actions (CI/CD), Loguru |
 
 ---
 
@@ -63,54 +86,74 @@ Siga os passos abaixo para subir a infraestrutura completa do SAST na sua máqui
 
 ### 📋 Pré-requisitos
 
-* Docker e Docker Compose instalados.
-* Git.
+- Docker e Docker Compose instalados
+- Git
 
 ### 🔧 Instalação e Execução
 
-1. **Clone o repositório**
+**1. Clone o repositório**
+
 ```bash
 git clone https://github.com/challengelotus/checkpoint4-cyber-sast-platform.git
 cd checkpoint4-cyber-sast-platform
 ```
 
-2. **Suba os containers com o Docker Compose**
+**2. Configure os segredos (DevSecOps)**
+
+Crie um arquivo `.env` na raiz, baseado no `.env.example`:
+
+```bash
+cp .env.example .env
+```
+
+> ⚠️ Edite o `.env` e defina senhas fortes para o JWT e para o Administrador Padrão.
+
+**3. Suba os containers**
+
 ```bash
 docker compose up --build -d
 ```
 
-3. **Baixe o Modelo de IA (Apenas na Primeira Execução)**
-Acesse o shell do container do Ollama e faça o download do Llama 3:
+**4. Baixe o modelo de IA (apenas na primeira execução)**
+
+Acesse o shell do container do Ollama e baixe o Llama 3:
+
 ```bash
 docker exec -it <nome_do_container_ollama> ollama run llama3
 ```
-*(Digite `/bye` para sair após a conclusão).*
+
+Digite `/bye` para sair após a conclusão do download.
 
 ---
 
-## 💡 Como Usar (Guia da Versão 3.0)
+## 💡 Como Usar (Guia da Versão 4.0 SaaS)
 
-Em vez de usar APIs via texto, a V3.0 possui uma interface gráfica completa focada na experiência do usuário e relatórios visuais:
+1. Acesse o portal em **http://localhost:8501**.
+2. Vá até a aba **Login / Cadastro** na barra lateral.
+3. Entre com as credenciais de Administrador (Premium) definidas no `.env`, ou crie uma conta **Free**.
+4. No **Dashboard SAST**, envie um arquivo Python (`.py`) vulnerável (ex.: arquivos da pasta `tests/`).
+5. O sistema valida seu plano e executa a auditoria correspondente:
 
-1. Acesse o **Dashboard Executivo** pelo navegador: `http://localhost:8501`.
-2. Na aba **🔍 Auditoria de Código**, clique em "Browse files" e envie um arquivo Python (`.py`) vulnerável (ex: os arquivos localizados na pasta `tests/` do projeto).
-3. Clique em **Executar Motor SAST**.
-4. Aguarde a orquestração (AST + Semgrep + Llama 3). O relatório será renderizado na tela contendo os *Cards* de vulnerabilidade e o parecer do Engenheiro de IA. Você pode exportar o laudo clicando em **Baixar Relatório em PDF**.
-5. Acesse a aba **📈 Dashboard Executivo** para visualizar as métricas globais do projeto (Gráfico de Rosca, Falhas Detectadas e Linha de Tendência).
+| Plano | Análise executada |
+| --- | --- |
+| 🆓 **Free** | AST + Semgrep |
+| 💎 **Premium** | AST + Semgrep + IA Llama 3 + laudo em PDF |
+
+6. Abra a aba **📈 Métricas e Histórico do Workspace** para ver gráficos de severidade, o ranking de arquivos críticos e os detalhes técnicos de varreduras anteriores.
 
 ---
 
 ## 👥 Equipe de Desenvolvimento
 
-Projeto desenvolvido para a disciplina de Cybersecurity na Engenharia de Software.
+Projeto desenvolvido para a disciplina de **Cybersecurity** na Engenharia de Software.
 
 | Integrante | RM | Responsabilidade Principal |
 | --- | --- | --- |
-| **João Victor Soave** | RM557595 | Arquiteto de Software e Desenvolvedor Backend |
-| **Maria Alice Freitas Araújo** | RM557516 | QA e Especialista em Testes/Segurança |
-| **Pedro Henrique Mendes dos Santos** | RM555332 | Desenvolvedor Backend / LLM Integration |
-| **Rafael Teofilo Lucena** | RM555600 | Arquiteto de Infraestrutura e Diagramação (C4) |
-| **Vinícius Fernandes Tavares Bittencourt** | RM558909 | Engenheiro DevOps / Docker |
+| João Victor Soave | RM557595 | Arquiteto de Software e Desenvolvedor Backend |
+| Maria Alice Freitas Araújo | RM557516 | QA e Especialista em Testes/Segurança |
+| Pedro Henrique Mendes dos Santos | RM555332 | Desenvolvedor Backend / Integração LLM |
+| Rafael Teofilo Lucena | RM555600 | Arquiteto de Infraestrutura e Diagramação (C4) |
+| Vinícius Fernandes Tavares Bittencourt | RM558909 | Engenheiro DevOps / Docker |
 
 ---
 
