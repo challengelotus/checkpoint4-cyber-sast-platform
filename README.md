@@ -49,7 +49,7 @@ A plataforma opera em modelo SaaS, com controle de acesso baseado em planos (RBA
 
 > O diagrama abaixo ilustra a arquitetura técnica conteinerizada da plataforma, detalhando a comunicação entre o frontend, a API síncrona protegida via JWT, o banco de dados e os múltiplos motores de análise.
 
-<img src="docs/diagrama_v2.png" alt="Diagrama de Arquitetura"/>
+<img src="docs/diagrama_v3.png" alt="Diagrama de Arquitetura"/>
 
 ---
 
